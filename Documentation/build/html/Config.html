@@ -37,8 +37,8 @@
 <p><em>SU2 DataMiner</em> uses a configuration class in order to store important information regarding the data generation, data mining, and
 manifold generation processes. This page lists some of the important functions of the <em>Config</em> class which acts as the base
 class for configurations specific to the application such as NICFD and FGM.</p>
-<section id="storage-location">
-<h2>Storage Location<a class="headerlink" href="#storage-location" title="Link to this heading">¶</a></h2>
+<section id="storage-location-and-configuration-information">
+<h2>Storage Location and Configuration Information<a class="headerlink" href="#storage-location-and-configuration-information" title="Link to this heading">¶</a></h2>
 <p>During the various processes in <em>SU2 DataMiner</em>, data are generated, processed, and analyzed. All information regarding these
 processes is stored on the current hardware in a user-defined location. <em>SU2 DataMiner</em> configurations can be saved locally under
 different names in order to keep track of various data sets and manifolds at once.
@@ -51,6 +51,20 @@ and save and load configurations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>config_name</strong> (<em>str</em>) – SU2 DataMiner configuration name.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="Common.Config_base.Config.GetConfigName">
+<span class="sig-name descname"><span class="pre">GetConfigName</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Common.Config_base.Config.GetConfigName" title="Link to this definition">¶</a></dt>
+<dd><p>Get the name of the current SU2 DataMiner configuration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>SU2 DataMiner configuration name.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -76,13 +90,28 @@ and save and load configurations.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="Common.Config_base.Config.GetOutputDir">
+<span class="sig-name descname"><span class="pre">GetOutputDir</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Common.Config_base.Config.GetOutputDir" title="Link to this definition">¶</a></dt>
+<dd><p>Get the output directory where raw and processed fluid data and manifold data are stored.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>Exception</strong> – if the output directory of the current SU2 DataMiner configuration is not present on the current hardware.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>output directory.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="Common.Config_base.Config.PrintBanner">
 <span class="sig-name descname"><span class="pre">PrintBanner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#Common.Config_base.Config.PrintBanner" title="Link to this definition">¶</a></dt>
 <dd><p>Print the main banner for the SU2 DataMiner configuration in the terminal.</p>
 </dd></dl>
 
-<p><code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">su2dataminer.config</span> <span class="pre">import</span> <span class="pre">Config</span>
-<span class="pre">hello`</span></code></p>
 </section>
 </section>
 
@@ -115,7 +144,7 @@ and save and load configurations.</p>
 <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">DataDrivenConfig Base Class</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#storage-location">Storage Location</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#storage-location-and-configuration-information">Storage Location and Configuration Information</a></li>
 </ul>
 </li>
 </ul>
@@ -144,7 +173,7 @@ and save and load configurations.</p>
       &#169;2025, E.C.Bunschoten.
       
       |
-      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.2.0</a>
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 8.1.3</a>
       &amp; <a href="https://alabaster.readthedocs.io">Alabaster 1.0.0</a>
       
       |
