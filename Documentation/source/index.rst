@@ -6,24 +6,26 @@
 SU2 DataMiner
 =============
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
-
-
-**flameletAI** (/lu'make/) is a Python library for cooks and food lovers that
-creates recipes mixing random ingredients.  It pulls data from the `Open Food
-Facts database <https://world.openfoodfacts.org/>`_ and offers a *simple* and
-*intuitive* API.
+SU2 DataMiner is an open-source, python-based software library for data-driven fluid modeling applications in `SU2`_. 
+The software currently supports laminar combustion and real-gas applications where the thermodynamic state of the fluid is evaluated by deep, dense, feed-forward multi-layer perceptrons trained 
+using physics-informed machine learning methods. 
 
 .. note::
 
    This project is under active development.
+
 .. toctree::
+   Installation
    Config
-   :maxdepth: 2
+   DataGeneration
+   flameletprocessing 
+   mlmethods
+   MLPTraining
+   :maxdepth: 1
    :caption: Contents:
-   
+
+.. _SU2 : https://github.com/su2code/SU2.git 
+
 
 Indices and tables
 ==================
