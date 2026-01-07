@@ -6,22 +6,26 @@
 SU2 DataMiner
 =============
 
-Add your content using ``reStructuredText`` syntax. See the
-`reStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/index.html>`_
-documentation for details.
-
-
-**SU2 DataMiner** is a Python-based workflow that allows for the generation and processing of fluid data
+SU2 DataMiner is an open-source, python-based software library for data-driven fluid modeling applications in `SU2`_. 
+The software currently supports laminar combustion and real-gas applications where the thermodynamic state of the fluid is evaluated by deep, dense, feed-forward multi-layer perceptrons trained 
+using physics-informed machine learning methods. 
 
 .. note::
 
    This project is under active development.
+
 .. toctree::
    Setup
    Config
-   :maxdepth: 2
+   DataGeneration
+   flameletprocessing 
+   mlmethods
+   MLPTraining
+   :maxdepth: 1
    :caption: Contents:
-   
+
+.. _SU2 : https://github.com/su2code/SU2.git 
+
 
 .. toctree::
    Tutorials/create_configs.rst 

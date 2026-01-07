@@ -20,7 +20,7 @@
 #  Derived DataMiner configuration classes for flamelet-generated manifold and NI-CFD         |
 #  applications.                                                                              |
 #                                                                                             |  
-# Version: 2.0.0                                                                              |
+# Version: 2.1.0                                                                              |
 #                                                                                             |
 #=============================================================================================#
 
@@ -32,6 +32,8 @@ import cantera as ct
 import pickle 
 import CoolProp
 import cantera as ct 
+from CoolProp.CoolProp import get_global_param_string
+supported_fluid_names = get_global_param_string("FluidsList").split(',')
 
 #---------------------------------------------------------------------------------------------#
 # Importing DataMiner classes and functions
@@ -85,7 +87,7 @@ class Config_NICFD(Config):
     _config_type = DefaultSettings_NICFD.config_type
 
     def __init__(self, load_file:str=None):
-        """EntropicAI SU2 DataMiner configuration class.
+        """SU2 DataMiner configuration class for real-gas applications.
 
         :param load_file: configuration file name to load, defaults to None
         :type load_file: str, optional
@@ -152,9 +154,9 @@ class Config_NICFD(Config):
         return 
     
 
-    def SetFluid(self, fluid_name):
+    def SetFluid(self, fluid_name=DefaultSettings_NICFD.fluid_name):
         """
-        Define the fluid name used for entropic data generation. By default, \"MM\" is used.
+        Define the fluid name used for entropic data generation. By default, "Air" is used. Specify a list of fluids for mixtures.
 
         :param fluid_name: CoolProp fluid name or list of names.
         :type fluid_name: str or list[str]
@@ -170,11 +172,17 @@ class Config_NICFD(Config):
             self.__fluid_names = []
             fluid_mixing = []
             for f in fluid_name:
+                if type(f) is not str:
+                    raise Exception("Fluid name should be provided in string format.")
+                if f not in supported_fluid_names:
+                    raise Exception("Fluid name should be one of the following: %s" % (", ".join(q for q in supported_fluid_names)))
                 self.__fluid_names.append(f)
             if len(self.__fluid_mole_fractions) == 0:
                 self.__fluid_mole_fractions = np.ones(len(self.__fluid_names))/len(self.__fluid_names)
 
         elif type(fluid_name) == str:
+            if fluid_name not in supported_fluid_names:
+                raise Exception("Fluid name should be one of the following: %s" % (", ".join(q for q in supported_fluid_names)))
             self.__fluid_names = [fluid_name]
         
         fluid_string = "&".join(f for f in self.__fluid_names)
@@ -186,10 +194,26 @@ class Config_NICFD(Config):
         return 
     
     def SetEquationOfState(self, EOS_type_in:str=DefaultSettings_NICFD.EOS_type):
-        self.__EOS_type=EOS_type_in 
+        """Define the equation of state backend used by CoolProp to generate fluid data.
+
+        :param EOS_type_in: backend used by CoolProp, defaults to "HEOS"
+        :type EOS_type_in: str, optional
+        :raises Exception: if the specified backend is not supported.
+        """
+        if type(EOS_type_in) is not str:
+            raise Exception("Equation of state should be provided in string format.")
+        if EOS_type_in.upper() not in DefaultSettings_NICFD.supported_backends:
+            raise Exception("Equation of state not supported, should be one of the following : %s" % ", ".join(e for e in DefaultSettings_NICFD.supported_backends))
+        
+        self.__EOS_type=EOS_type_in.upper()
         return
     
     def GetEquationOfState(self):
+        """Retrieve the equation of state backend used by CoolProp for fluid data calculations.
+
+        :return: name of the equation of state model.
+        :rtype: str
+        """
         return self.__EOS_type 
     
     def SetFluidMoleFractions(self, mole_fractions:list[float]):
@@ -215,8 +239,7 @@ class Config_NICFD(Config):
         return 
         
     def GetFluid(self):
-        """
-        Get the fluid used for entropic data generation.
+        """Get the name of the fluid for which thermodynamic data is generated.
         :return: fluid name
         :rtype: str
 
@@ -230,24 +253,29 @@ class Config_NICFD(Config):
         return self.__fluid_mole_fractions.copy()
     
     def UseAutoRange(self, use_auto_range:bool=True):
-        """Automatically determine fluid data range based on available fluid properties.
+        """Automatically determine the span of the thermodynamic state space for which fluid data are generated.
 
         :param use_auto_range: automatically set fluid data range, defaults to True
         :type use_auto_range: bool, optional
         """
-        self.__use_auto_range = use_auto_range
+        self.__use_auto_range = bool(use_auto_range)
         return 
     
     def GetAutoRange(self):
+        """The span of the thermodynamic state space is determined automatically.
+
+        :return: whether automatic ranging is used.
+        :rtype: bool
+        """
         return self.__use_auto_range 
     
     def UsePTGrid(self, PT_grid:bool=DefaultSettings_NICFD.use_PT_grid):
         """Define fluid data grid in the pressure-temperature space. If not, the fluid data grid is defined in the density-energy space.
 
-        :param PT_grid: use pressure-temperature based grid, defaults to DefaultSettings_NICFD.use_PT_grid
+        :param PT_grid: use pressure-temperature based grid, defaults to False
         :type PT_grid: bool, optional
         """
-        self.__use_PT = PT_grid 
+        self.__use_PT = bool(PT_grid) 
         return 
     
     def GetPTGrid(self):
@@ -260,7 +288,7 @@ class Config_NICFD(Config):
         return self.__use_PT 
     
     def SetTemperatureBounds(self, T_lower:float=DefaultSettings_NICFD.T_min, T_upper:float=DefaultSettings_NICFD.T_max):
-        """Set the upper and lower temperature limits for the fluid data grid.
+        """Set the upper and lower temperature limits between which fluid data are generated.
 
         :param T_lower: lower temperature limit in Kelvin.
         :type T_lower: float
@@ -268,6 +296,8 @@ class Config_NICFD(Config):
         :type T_upper: float
         :raises Exception: if lower temperature limit exceeds upper temperature limit.
         """
+        if (T_lower <=0 or T_upper <=0):
+            raise Exception("Temperature values should be positive.")
         if (T_lower >= T_upper):
             raise Exception("Lower temperature should be lower than upper temperature.")
         else:
@@ -631,8 +661,8 @@ class Config_FGM(Config):
 
     __Le_avg_method = avg_Le_const
     __Le_const_sp:np.ndarray[float] = None 
-    __Le_avg_eq_ratio:float = 0.5
-    __Le_avg_T_unb:float = 300.0
+    __Le_avg_eq_ratio:float = None
+    __Le_avg_T_unb:float = None
 
     def __init__(self, load_file:str=None):
         """Class constructor
@@ -1553,14 +1583,20 @@ class Config_FGM(Config):
                 raise Exception("Reactant temperature should be positive.")
         
         self.__Le_avg_method = avg_Le_const
-        if reactant_temperature == None:
-            T_reactants = 0.5*(self.__T_unb_lower + self.__T_unb_upper)
+        if (reactant_temperature == None):
+            if (self.__Le_avg_T_unb == None):
+                T_reactants = 0.5*(self.__T_unb_lower + self.__T_unb_upper)
+            else:
+                T_reactants = self.__Le_avg_T_unb
         else:
             T_reactants = reactant_temperature 
         self.__Le_avg_T_unb = T_reactants 
 
-        if mixture_status == None:
-            mixture_status_gas = 0.5*(self.__mix_status_lower + self.__mix_status_upper)
+        if (mixture_status == None):
+            if (self.__Le_avg_eq_ratio == None):
+                mixture_status_gas = 0.5*(self.__mix_status_lower + self.__mix_status_upper)
+            else:
+                mixture_status_gas = self.__Le_avg_eq_ratio
         else:
             mixture_status_gas = mixture_status
         self.__Le_avg_eq_ratio = mixture_status_gas
@@ -1946,12 +1982,14 @@ class Config_FGM(Config):
     def SetWeights(self, weights: list[np.ndarray[float]], i_group:int=0):
         self._MLP_weights[i_group] = []
         for w in weights:
+            self.__WeightsCheck(w)
             self._MLP_weights[i_group].append(w)
         return 
     
     def SetBiases(self, biases:list[np.ndarray[float]], i_group:int=0):
         self._MLP_biases[i_group] = []
         for w in biases:
+            self.__BiasesCheck(w)
             self._MLP_biases[i_group].append(w)
         return 
     
