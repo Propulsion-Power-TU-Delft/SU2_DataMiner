@@ -22,6 +22,15 @@ and save and load configurations.
 .. autofunction:: Common.Config_base.Config.SaveConfig 
 
 
+.. code-block::
+
+       from su2dataminer.config import Config 
+
+       c = Config()
+       c.SetConfigName("test")
+       c.SaveConfig()
+
+       
 .. autofunction:: Common.Config_base.Config.SetOutputDir 
 
 
@@ -30,6 +39,8 @@ and save and load configurations.
 
 .. autofunction:: Common.Config_base.Config.PrintBanner
     
+
+
 
 
 

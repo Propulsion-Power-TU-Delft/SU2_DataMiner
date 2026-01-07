@@ -11,19 +11,23 @@ Add your content using ``reStructuredText`` syntax. See the
 documentation for details.
 
 
-**flameletAI** (/lu'make/) is a Python library for cooks and food lovers that
-creates recipes mixing random ingredients.  It pulls data from the `Open Food
-Facts database <https://world.openfoodfacts.org/>`_ and offers a *simple* and
-*intuitive* API.
+**SU2 DataMiner** is a Python-based workflow that allows for the generation and processing of fluid data
 
 .. note::
 
    This project is under active development.
 .. toctree::
+   Setup
    Config
    :maxdepth: 2
    :caption: Contents:
    
+
+.. toctree::
+   Tutorials/create_configs.rst 
+   :maxdepth: 2
+   :caption: Tutorials: 
+
 
 Indices and tables
 ==================
