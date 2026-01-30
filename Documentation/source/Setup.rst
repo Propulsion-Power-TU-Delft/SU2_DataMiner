@@ -15,7 +15,7 @@ Requirements
 * pip 
 * build-essential
 
-Optional:
+Recommended:
 
 * python3-virtualenv
 

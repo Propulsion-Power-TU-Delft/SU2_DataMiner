@@ -155,5 +155,85 @@ The code snippet below demonstrates the
 Configuration for combustion applications 
 =========================================
 
+The following section describes the most important functions of the SU2 DataMiner configuration class for FGM applications. 
+
+SU2 DataMiner supports the generation of premixed flamelets using `Cantera <CanteraLink_>`_ for FGM applications. 
+
+
+Reaction Mechanism and Species Transport Model 
+----------------------------------------------
+
+
+The reaction mechanism used for flamelet calculations is specified through the following function:
+
+
+.. autofunction:: Common.DataDrivenConfig.Config_FGM.SetReactionMechanism
+
+.. autofunction:: Common.DataDrivenConfig.Config_FGM.GetReactionMechanism
+
+.. autofunction:: Common.DataDrivenConfig.Config_FGM.SetTransportModel
+
+.. autofunction:: Common.DataDrivenConfig.Config_FGM.GetTransportModel
+
+
+Reactants and Flamelet Types
+----------------------------
+
+
+The fuel and oxidizer used for flamelet calculations can be defined through the following functions: 
+
+
+.. autofunction:: Common.DataDrivenConfig.Config_FGM.SetFuelDefinition
+
+.. autofunction:: Common.DataDrivenConfig.Config_FGM.SetOxidizerDefinition
+
+
+The types of flamelet data that are currently supported by SU2 DataMiner are adiabatic flamelets, burner-stabilized flamelets, and chemical equilibrium data. 
+Each of these flamelet types can be included or excluded from the manifold through the following functions: 
+
+.. autofunction:: Common.DataDrivenConfig.Config_FGM.RunFreeFlames 
+
+.. autofunction:: Common.DataDrivenConfig.Config_FGM.RunBurnerFlames
+
+.. autofunction:: Common.DataDrivenConfig.Config_FGM.RunEquilibrium
+
+
+FGM Controlling Variables 
+-------------------------
+
+.. autofunction:: Common.DataDrivenConfig.Config_FGM.SetControllingVariables
+
+.. autofunction:: Common.DataDrivenConfig.Config_FGM.GetControllingVariables
+
+.. autofunction:: Common.DataDrivenConfig.Config_FGM.SetProgressVariableDefinition 
+
+.. autofunction:: Common.DataDrivenConfig.Config_FGM.ResetProgressVariableDefinition 
+
+.. autofunction:: Common.DataDrivenConfig.Config_FGM.GetUnburntScalars 
+
+
+Preferential Diffusion 
+----------------------
+
+.. autofunction:: Common.DataDrivenConfig.Config_FGM.EnablePreferentialDiffusion 
+
+.. autofunction:: Common.DataDrivenConfig.Config_FGM.SetAverageLewisNumbers 
+
+.. autofunction:: Common.DataDrivenConfig.Config_FGM.ComputeBetaTerms 
+
+
+Thermochemical State Variables 
+------------------------------
+
+.. autofunction:: Common.DataDrivenConfig.Config_FGM.AddOutputGroup
+
+.. autofunction:: Common.DataDrivenConfig.Config_FGM.RemoveOutputGroup 
+
+    
+.. autofunction:: Common.DataDrivenConfig.Config_FGM.EditOutputGroup
+
+
 
 .. _MLPCpp : https://github.com/EvertBunschoten/MLPCpp.git 
+
+.. _CanteraLink: https://cantera.org/

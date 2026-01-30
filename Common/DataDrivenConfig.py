@@ -1871,7 +1871,7 @@ class Config_FGM(Config):
         self.__activation_function.append(DefaultSettings_FGM.activation_function)
         return 
     
-    def DefineOutputGroup(self, i_group:int, variable_names_in:list[str]):
+    def EditOutputGroup(self, i_group:int, variable_names_in:list[str]):
         """Re-define the variables in a specific MLP output group.
 
         :param i_group: MLP output group index to adapt.
@@ -1892,7 +1892,13 @@ class Config_FGM(Config):
         return 
     
     def RemoveOutputGroup(self, i_group:int):
-        if i_group > len(self.__MLP_output_groups):
+        """Remove one of the MLP output groups.
+
+        :param i_group: MLP output group index to remove.
+        :type i_group: int
+        :raises Exception: if group index is outside the range of stored groups.
+        """
+        if (i_group > len(self.__MLP_output_groups)) or (i_group<0):
             raise Exception("Group not present in MLP outputs.")
         print("Removing output group %i: %s" % (i_group, ",".join(s for s in self.__MLP_output_groups[i_group-1])))
         self.__MLP_output_groups.remove(self.__MLP_output_groups[i_group-1])
