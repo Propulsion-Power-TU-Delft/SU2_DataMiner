@@ -15,7 +15,7 @@ using physics-informed machine learning methods.
    This project is under active development.
 
 .. toctree::
-   Installation
+   Setup
    Config
    DataGeneration
    flameletprocessing 
@@ -25,6 +25,12 @@ using physics-informed machine learning methods.
    :caption: Contents:
 
 .. _SU2 : https://github.com/su2code/SU2.git 
+
+
+.. toctree::
+   Tutorials/create_configs.rst 
+   :maxdepth: 2
+   :caption: Tutorials: 
 
 
 Indices and tables
