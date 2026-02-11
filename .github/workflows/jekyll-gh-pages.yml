@@ -33,7 +33,7 @@ jobs:
           pip install sphinx sphinx_rtd_theme myst_parser pydata-sphinx-theme
       - name: Sphinx build
         run: |
-          cd Documentation && sphinx-build -b html source ../_site
+          cd Documentation && ls ./* && sphinx-build -b html source ../_site
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
 
