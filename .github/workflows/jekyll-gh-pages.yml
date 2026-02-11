@@ -4,7 +4,7 @@ name: Deploy Sphinx website
 on:
   # Runs on pushes targeting the default branch
   push:
-    branches: ["main"]
+    branches: ["main", "develop"]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -30,7 +30,7 @@ jobs:
       - uses: actions/setup-python@v5
       - name: Install dependencies
         run: |
-          pip install sphinx sphinx_rtd_theme myst_parser pydata-sphinx-theme && pip install -r requirements.txt
+          pip install sphinx sphinx_rtd_theme myst_parser pydata-sphinx-theme && pip install -r required_packages.txt
       - name: Sphinx build
         run: |
           export PYTHONPATH=$PYTHONPATH:$(pwd) && cd Documentation && sphinx-build -b html source ../_site
