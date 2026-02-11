@@ -21,13 +21,12 @@
 #  homogeneous distribution of flamelet data along the progress variable, enthalpy, and       |
 #  mixture fraction direction.                                                                |
 #                                                                                             |
-# Version: 2.0.0                                                                              |
+# Version: 3.0.0                                                                              |
 #                                                                                             |
 #=============================================================================================#
 
 import numpy as np 
 from os import path, listdir
-import sys
 import csv 
 from tqdm import tqdm
 np.random.seed(0)
@@ -38,7 +37,7 @@ prop_cycle = plt.rcParams["axes.prop_cycle"]
 colors = prop_cycle.by_key()['color']
 
 from Common.DataDrivenConfig import Config_FGM
-from Common.Properties import DefaultSettings_FGM, FGMVars
+from Common.Properties import DefaultSettings_FGM, FGMVars, FGMPlotSymbols
 
 class FlameletConcatenator:
     """Read, regularize, and concatenate flamelet data for MLP training or LUT generation.
@@ -100,6 +99,8 @@ class FlameletConcatenator:
         __Sources_vars.append("Y_dot_pos-"+s)
         __Sources_vars.append("Y_dot_neg-"+s)
         __Sources_vars.append("Y_dot_net-"+s)
+        __Sources_vars.append("Y-"+s)
+
     __Sources_flamelet_data = None
 
     __CV_flamelet_data:np.ndarray = None    # Flamelet controlling variables
@@ -222,6 +223,7 @@ class FlameletConcatenator:
             self.__Sources_vars.append("Y_dot_pos-"+s)
             self.__Sources_vars.append("Y_dot_neg-"+s)
             self.__Sources_vars.append("Y_dot_net-"+s)
+            self.__Sources_vars.append("Y-"+s)
         return 
 
     def SetControllingVariables(self, controlling_variables:list[str]=DefaultSettings_FGM.controlling_variables):
@@ -619,7 +621,7 @@ class FlameletConcatenator:
         self.__TD_flamelet_data = np.zeros([n_flamelets_total * self.__Np_per_flamelet, len(self.__TD_train_vars)])
         if self.__Config.PreferentialDiffusion():
             self.__PD_flamelet_data = np.zeros([n_flamelets_total * self.__Np_per_flamelet, len(self.__PD_train_vars)])
-        self.__Sources_flamelet_data = np.zeros([n_flamelets_total * self.__Np_per_flamelet, 1 + 3 * len(self.__Species_in_FGM)])
+        self.__Sources_flamelet_data = np.zeros([n_flamelets_total * self.__Np_per_flamelet, 1 + 4 * len(self.__Species_in_FGM)])
         self.__LookUp_flamelet_data = np.zeros([n_flamelets_total * self.__Np_per_flamelet, len(self.__LookUp_vars)])
         self.__flamelet_ID = np.zeros([n_flamelets_total * self.__Np_per_flamelet, len(self.__flamelet_ID_vars)],dtype=int)
 
@@ -706,6 +708,7 @@ class FlameletConcatenator:
                             LookUp_data[sourceterm_zero_line_numbers, iVar_LookUp] = 0.0
                 
                 # Load species sources data
+                species_mass_fraction = np.zeros([len(D), len(self.__Species_in_FGM)])
                 species_production_rate = np.zeros([len(D), len(self.__Species_in_FGM)])
                 species_destruction_rate = np.zeros([len(D), len(self.__Species_in_FGM)])
                 species_net_rate = np.zeros([len(D), len(self.__Species_in_FGM)])
@@ -715,24 +718,28 @@ class FlameletConcatenator:
                             species_production_rate[:, iSp] = np.zeros(len(D))
                             species_destruction_rate[:, iSp] = np.zeros(len(D))
                             species_net_rate[:, iSp] = np.zeros(len(D))
+                            species_mass_fraction[:, iSp] = np.zeros(len(D))
                             for NOsp in ["NO2","NO","N2O"]:
                                 species_production_rate[:, iSp] += D[:, variables.index("Y_dot_pos-"+NOsp)]
                                 species_destruction_rate[:, iSp] += D[:, variables.index("Y_dot_neg-"+NOsp)]
                                 species_net_rate[:, iSp] += D[:, variables.index("Y_dot_net-"+NOsp)]
+                                species_mass_fraction[:, iSp] += D[:, variables.index("Y-"+Sp)]
                         else:
+                            species_mass_fraction[:, iSp] = D[:, variables.index("Y-"+Sp)]
                             species_production_rate[:, iSp] = D[:, variables.index("Y_dot_pos-"+Sp)]
                             species_destruction_rate[:, iSp] = D[:, variables.index("Y_dot_neg-"+Sp)]
                             species_net_rate[:, iSp] = D[:, variables.index("Y_dot_net-"+Sp)]
 
-                Sources_data = np.zeros([len(D), 1 + 3 * len(self.__Species_in_FGM)])
+                Sources_data = np.zeros([len(D), 1 + 4 * len(self.__Species_in_FGM)])
                 if BurningFlamelet:
                     ppv_flamelet = self.__Config.ComputeProgressVariable_Source(variables, D)
                     Sources_data[:, 0] = ppv_flamelet
 
                     for iSp in range(len(self.__Species_in_FGM)):
-                        Sources_data[:, 1 + 3*iSp] = species_production_rate[:, iSp]
-                        Sources_data[:, 1 + 3*iSp + 1] = species_destruction_rate[:, iSp]
-                        Sources_data[:, 1 + 3*iSp + 2] = species_net_rate[:, iSp]
+                        Sources_data[:, 1 + 4*iSp] = species_production_rate[:, iSp]
+                        Sources_data[:, 1 + 4*iSp + 1] = species_destruction_rate[:, iSp]
+                        Sources_data[:, 1 + 4*iSp + 2] = species_net_rate[:, iSp]
+                        Sources_data[:, 1 + 4*iSp + 3] = species_mass_fraction[:, iSp]
 
                     Sources_data[sourceterm_zero_line_numbers, :] = 0.0
 
@@ -765,7 +772,7 @@ class FlameletConcatenator:
                             if self.__Config.PreferentialDiffusion():
                                 PD_sampled = PD_data*np.ones([self.__Np_per_flamelet, np.shape(CV_flamelet)[1]])
                             lookup_sampled = LookUp_data*np.ones([self.__Np_per_flamelet, np.shape(CV_flamelet)[1]])
-                            sources_sampled = np.zeros([self.__Np_per_flamelet, 1 + 3*len(self.__Species_in_FGM)])
+                            sources_sampled = np.zeros([self.__Np_per_flamelet, 1 + 4*len(self.__Species_in_FGM)])
                         else:
                             if is_equilibrium:
                                 S_q = np.linspace(0, 1.0, self.__Np_per_flamelet)
@@ -776,7 +783,7 @@ class FlameletConcatenator:
                             if self.__Config.PreferentialDiffusion():
                                 PD_sampled = np.zeros([self.__Np_per_flamelet, np.shape(PD_data)[1]])
                             lookup_sampled = np.zeros([self.__Np_per_flamelet, np.shape(LookUp_data)[1]])
-                            sources_sampled = np.zeros([self.__Np_per_flamelet, 1 + 3*len(self.__Species_in_FGM)])
+                            sources_sampled = np.zeros([self.__Np_per_flamelet, 1 + 4*len(self.__Species_in_FGM)])
                             for i_CV in range(self.__N_control_vars):
                                 CV_sampled[:, i_CV] = np.interp(S_q, S_flamelet_norm, CV_flamelet[:, i_CV])
                             for iVar_TD in range(len(self.__TD_train_vars)):
@@ -787,7 +794,7 @@ class FlameletConcatenator:
 
                             for iVar_LU in range(len(self.__LookUp_vars)):
                                 lookup_sampled[:, iVar_LU] = np.interp(S_q, S_flamelet_norm, LookUp_data[:, iVar_LU])
-                            for iVar_Source in range(1 + 3*len(self.__Species_in_FGM)):
+                            for iVar_Source in range(1 + 4*len(self.__Species_in_FGM)):
                                 sources_sampled[:, iVar_Source] = np.interp(S_q, S_flamelet_norm, Sources_data[:, iVar_Source])
 
                     start = (i_start + i_flamelet + i_flamelet_total) * self.__Np_per_flamelet
@@ -1104,31 +1111,41 @@ class GroupOutputs:
             combination_index = self.__best_group
         if combination_index >= len(self.__most_interesting_groups):
             raise Exception("Index exceeds number of best combinations")
+
+        N=len(self.__most_interesting_groups[combination_index])
+        plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.cubehelix(np.linspace(0,1,N+1)))
+        colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
         fig = plt.figure(figsize=[10,10])
         ax = plt.axes()
-        ax.matshow(np.abs(self.__correlation_matrix))
+        ax.matshow(np.abs(self.__correlation_matrix), cmap="gray")
         for i in range(len(self.__free_variables)):
             for j in range(len(self.__free_variables)):
                 ax.text(i, j, "%.2f" % (np.abs(self.__correlation_matrix[i,j])),\
                         fontsize=12,\
                         horizontalalignment='center',\
-                        verticalalignment='center')
+                        verticalalignment='center',\
+                        color ='k' if np.abs(self.__correlation_matrix[i,j])>0.5 else 'white')
 
         for iGroup, g in enumerate(self.__most_interesting_groups[combination_index]):
             color = colors[iGroup]
             for iVar, v in enumerate(g):
                 if iVar == 0:
-                    ax.plot(self.__free_variables.index(v), self.__free_variables.index(v), 'o',markerfacecolor='none',color=color,markersize=24, markeredgewidth=3,label="Group "+str(iGroup+1))
+                    ax.plot(self.__free_variables.index(v), self.__free_variables.index(v), 's',markerfacecolor='none',color=color,markersize=36, markeredgewidth=5,label="Group "+str(iGroup+1))
+                
                 else:
-                    ax.plot(self.__free_variables.index(v), self.__free_variables.index(g[0]), 'o',markerfacecolor='none',color=color,markersize=24, markeredgewidth=3)
-        
+                    ax.plot(self.__free_variables.index(v), self.__free_variables.index(g[0]), 's',markerfacecolor='none',color=color,markersize=36, markeredgewidth=5)
+                ax.text(self.__free_variables.index(v), len(self.__correlation_matrix), "%i" % (iGroup+1),fontsize=20,\
+                        horizontalalignment='center',\
+                        verticalalignment='center')
+        ax.text(-0.5, len(self.__correlation_matrix), r"$J_\mathrm{group}$", fontsize=20,horizontalalignment='right',verticalalignment='center')
         ax.set_xticks(range(len(self.__free_variables)))
         ax.set_yticks(range(len(self.__free_variables)))
-        ax.set_xticklabels(self.__free_variables)
-        ax.set_yticklabels(self.__free_variables)
+        
+        
+        ax.set_xticklabels([FGMPlotSymbols[q] for q in self.__free_variables])
+        ax.set_yticklabels([FGMPlotSymbols[q] for q in self.__free_variables])
         ax.tick_params(axis='x',labelrotation=90)
         ax.tick_params(which='both',labelsize=18)
-        ax.legend(fontsize=20, bbox_to_anchor=(1.0, 0.5))
         fig.savefig(self.__Config.GetOutputDir()+"/Group_correlation_matrix.pdf",format='pdf',bbox_inches='tight')
         plt.tight_layout()
         plt.show()

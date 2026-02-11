@@ -20,7 +20,7 @@
 #  Derived DataMiner configuration classes for flamelet-generated manifold and NI-CFD         |
 #  applications.                                                                              |
 #                                                                                             |  
-# Version: 2.0.0                                                                              |
+# Version: 3.0.0                                                                              |
 #                                                                                             |
 #=============================================================================================#
 
@@ -82,6 +82,7 @@ class Config_NICFD(Config):
     __Table_ref_radius:float = None         # Refinement radius within which refined cell size is applied.
     __Table_curv_threshold:float = None     # Curvature threshold beyond which refinement is applied.
 
+    _config_type = DefaultSettings_NICFD.config_type
 
     def __init__(self, load_file:str=None):
         """EntropicAI SU2 DataMiner configuration class.
@@ -630,7 +631,8 @@ class Config_FGM(Config):
 
     __Le_avg_method = avg_Le_const
     __Le_const_sp:np.ndarray[float] = None 
-    __custom_Le_av_set:bool = False 
+    __Le_avg_eq_ratio:float = None
+    __Le_avg_T_unb:float = None
 
     def __init__(self, load_file:str=None):
         """Class constructor
@@ -713,8 +715,7 @@ class Config_FGM(Config):
             self.SetProgressVariableDefinition(pv_sp_default, pv_w_default)
             self.__custom_pv_set = False
 
-        if not self.__custom_Le_av_set:
-            self.SetAverageLewisNumbers()
+        self.SetAverageLewisNumbers()
 
         return 
     
@@ -786,12 +787,9 @@ class Config_FGM(Config):
         return 
     
     def ComputeMixFracConstants(self):
+        """Define species weights such that Z = w * Y + z_c where Z is the mixture fraction, Y is the array of species mass fractions, w is a species weights array, and z_c is a constant.
+        The components of w are used to calculate the value of the preferential diffusion scalar for the mixture fraction.
         """
-        
-        Compute the species mass fraction coefficients according to the Bilger mixture fraction definition.
-        
-        """
-
         # Number of species in fuel and oxidizer definition.
         n_fuel = len(self.__fuel_species)
         n_ox = len(self.__oxidizer_species)
@@ -800,95 +798,40 @@ class Config_FGM(Config):
         self.__fuel_string = ','.join([self.__fuel_species[i] + ':'+str(self.__fuel_weights[i]) for i in range(n_fuel)])
         self.__oxidizer_string = ','.join([self.__oxidizer_species[i] + ':'+str(self.__oxidizer_weights[i]) for i in range(n_ox)])
 
+        # Retrieving species mass fractions for oxidizer and fuel mixtures.
+        self.gas.TP=300,DefaultSettings_FGM.pressure
+        self.gas.set_mixture_fraction(0.0, self.__fuel_string, self.__oxidizer_string)
+        Y_o = self.gas.Y 
+        self.gas.set_mixture_fraction(1.0, self.__fuel_string, self.__oxidizer_string)
+        Y_f = self.gas.Y 
         
-        # Getting the carrier specie index
-        idx_c = self.gas.species_index(self.__carrier_specie)
-
-        #--- Computing mixture fraction coefficients ---#
-        # setting up mixture in stochiometric condition
-        self.gas.TP = 300, DefaultSettings_FGM.pressure
-        self.gas.set_equivalence_ratio(1.0, self.__fuel_string, self.__oxidizer_string)
-        self.gas.equilibrate('TP')
-
-
-        # number of atoms occurrances in fuel
-        atoms_in_fuel = np.zeros(self.gas.n_elements)
+        # Calculating Bilger mixture fraction weighting factors.
+        gamma_fuel = np.zeros(self.gas.n_elements)
         for i_e in range(self.gas.n_elements):
-            for i_f in range(n_fuel):
-                if self.gas.n_atoms(self.__fuel_species[i_f], self.gas.element_names[i_e]) > 0:
-                    atoms_in_fuel[i_e] += self.__fuel_weights[i_f]
+            if self.gas.element_name(i_e) == "C":
+                gamma_fuel[self.gas.element_index("C")] = 2.0 / self.gas.atomic_weights[self.gas.element_index("C")]
+            elif self.gas.element_name(i_e) == "H":
+                gamma_fuel[self.gas.element_index("H")] = 1.0 / (2*self.gas.atomic_weights[self.gas.element_index("H")])
+            elif self.gas.element_name(i_e) == "O":
+                gamma_fuel[self.gas.element_index("O")] = -1.0 / self.gas.atomic_weights[self.gas.element_index("O")]
+            else:
+                gamma_fuel[i_e] = 0.0
 
-        # Computing the element mass fractions in the equilibrated mixture
-        Z_elements = np.zeros(self.gas.n_elements)
-        for i_e in range(self.gas.n_elements):
-            for i_s in range(self.gas.n_species):
-                Z_elements[i_e] += self.gas.n_atoms(self.gas.species_name(i_s), self.gas.element_name(i_e)) * self.gas.atomic_weights[i_e] * self.gas.Y[i_s]/self.gas.molecular_weights[i_s]
-
-        # Getting element index of oxygen
-        idx_O = self.gas.element_index('O')
-
-        # Computing the elemental mass fractions in the fuel
-        Z_fuel_elements = 0
-        for i_e in range(self.gas.n_elements):
-            if i_e != idx_O:
-                    Z_fuel_elements += atoms_in_fuel[i_e] * Z_elements[i_e]/self.gas.atomic_weights[i_e]
-
-        # Computing the oxygen stochimetric coefficient
-        nu_O = Z_fuel_elements * self.gas.atomic_weights[idx_O]/Z_elements[idx_O]
-
-        # Filling in fuel specie mass fraction array
-        __fuel_weights_s = np.zeros(self.gas.n_species)
-        for i_fuel in range(n_fuel):
-            idx_sp = self.gas.species_index(self.__fuel_species[i_fuel])
-            __fuel_weights_s[idx_sp] = self.__fuel_weights[i_fuel]
-        Y_fuel_s = __fuel_weights_s * self.gas.molecular_weights/np.sum(__fuel_weights_s * self.gas.molecular_weights)
-
-        # Filling in oxidizer specie mass fraction array
-        __oxidizer_weights_s = np.zeros(self.gas.n_species)
-        for i_oxidizer in range(n_ox):
-            idx_sp = self.gas.species_index(self.__oxidizer_species[i_oxidizer])
-            __oxidizer_weights_s[idx_sp] = self.__oxidizer_weights[i_oxidizer]
-        Y_oxidizer_s = __oxidizer_weights_s * self.gas.molecular_weights/np.sum(__oxidizer_weights_s * self.gas.molecular_weights)
-
-        # Computing elemental mass fractions of pure fuel stream
-        Z_elements_1 = np.zeros(self.gas.n_elements)
-        for i_e in range(self.gas.n_elements):
-            for i_s in range(self.gas.n_species):
-                Z_elements_1[i_e] += self.gas.n_atoms(self.gas.species_name(i_s), self.gas.element_name(i_e)) * self.gas.atomic_weights[i_e] * Y_fuel_s[i_s] / self.gas.molecular_weights[i_s]
-
-        # Computing elemental mass fractions of pure oxidizer stream
-        Z_elements_2 = np.zeros(self.gas.n_elements)
-        for i_e in range(self.gas.n_elements):
-            for i_s in range(self.gas.n_species):
-                Z_elements_2[i_e] += self.gas.n_atoms(self.gas.species_name(i_s), self.gas.element_name(i_e)) * self.gas.atomic_weights[i_e] * Y_oxidizer_s[i_s] / self.gas.molecular_weights[i_s]
-
-        # Computing stochimetric coefficient of pure fuel stream
-        beta_1 = 0
-        for i_e in range(self.gas.n_elements):
-            beta_1 += atoms_in_fuel[i_e]*Z_elements_1[i_e]/self.gas.atomic_weights[i_e]
-        beta_1 -= nu_O * Z_elements_1[idx_O]/self.gas.atomic_weights[idx_O]
-
-        # Computing stochimetric coefficient of pure oxidizer stream
-        beta_2 = 0
-        for i_e in range(self.gas.n_elements):
-            beta_2 += atoms_in_fuel[i_e] * Z_elements_2[i_e]/self.gas.atomic_weights[i_e]
-        beta_2 -= nu_O * Z_elements_2[idx_O]/self.gas.atomic_weights[idx_O]
-
-        # Computing mixture fraction coefficient
-        self.__mixfrac_coefficients = np.zeros(self.gas.n_species)
+        # Constructing species mass fraction weights array.
+        w_z = np.zeros(self.gas.n_species)
         for i_s in range(self.gas.n_species):
-            z_fuel = 0
             for i_e in range(self.gas.n_elements):
-                z_fuel += atoms_in_fuel[i_e] * self.gas.n_atoms(self.gas.species_name(i_s), self.gas.element_name(i_e))/self.gas.molecular_weights[i_s]
-            z_ox = -nu_O * self.gas.n_atoms(self.gas.species_name(i_s), 'O')/self.gas.molecular_weights[i_s]
-
-            self.__mixfrac_coefficients[i_s] = (1/(beta_1 - beta_2)) * (z_fuel + z_ox)
-
-        # Constant term in mixture fraction equation
-        self.__mixfrac_constant = -beta_2 / (beta_1 - beta_2)
-
-        # Mixture fraction weight of the carrier specie
-        self.__mixfrac_coeff_carrier = self.__mixfrac_coefficients[idx_c]
+                g = gamma_fuel[i_e]
+                W_e = self.gas.atomic_weights[i_e]
+                n_atoms = self.gas.n_atoms(self.gas.species_name(i_s), self.gas.element_name(i_e))
+                W_s = self.gas.molecular_weights[i_s]
+                w_z[i_s] += g * n_atoms * W_e / W_s 
+        
+        beta_o = np.sum(w_z * Y_o)
+        beta_f = np.sum(w_z * Y_f)
+        self.__mixfrac_coefficients = w_z / (beta_f - beta_o)
+        self.__mixfrac_constant = -beta_o / (beta_f - beta_o)
+        self.__mixfrac_coeff_carrier = self.__mixfrac_coefficients[self.gas.species_index(self.__carrier_specie)]
         return 
     
     def GetMixtureFractionCoefficients(self):
@@ -1102,8 +1045,7 @@ class Config_FGM(Config):
             self.__mix_status_lower = mix_lower
             self.__mix_status_upper = mix_upper
 
-        if not self.__custom_Le_av_set:
-            self.SetAverageLewisNumbers()
+        self.SetAverageLewisNumbers()
 
         return 
     
@@ -1159,8 +1101,7 @@ class Config_FGM(Config):
             self.__T_unb_upper = T_unb_upper
             self.__T_unb_lower = T_unb_lower
 
-        if not self.__custom_Le_av_set:
-            self.SetAverageLewisNumbers()
+        self.SetAverageLewisNumbers()
 
         return 
     
@@ -1207,8 +1148,7 @@ class Config_FGM(Config):
 
         """
         self.__run_mixture_fraction = run_as_mixture_fraction
-        if not self.__custom_Le_av_set:
-            self.SetAverageLewisNumbers()
+        self.SetAverageLewisNumbers()
 
         return
     
@@ -1406,6 +1346,8 @@ class Config_FGM(Config):
         pv_species.append(major_product)
         pv_weights.append(1.0 / self.gas.molecular_weights[self.gas.species_index(major_product)])
 
+        denominator = sum([abs(w) for w in pv_weights])
+        pv_weights = [w / denominator for w in pv_weights]
         return pv_species, pv_weights
     
     def SetPassiveSpecies(self, passive_species:list[str]=[]):
@@ -1534,6 +1476,32 @@ class Config_FGM(Config):
                 ppv += self.__pv_weights[iPv] * (prodrate_pos + prodrate_neg * mass_fraction)
             return ppv 
     
+    def GetSparkSources(self, val_phi:float, val_T:float, iGroup:int=0):
+        self.gas.set_equivalence_ratio(val_phi, self.__fuel_string, self.__oxidizer_string)
+        self.gas.TP=val_T,DefaultSettings_FGM.pressure 
+        
+        flame = ct.FreeFlame(self.gas)
+        flame.transport_model = self.__transport_model 
+        flame.solve(auto=True,refine_grid=True,loglevel=0)
+        dx = flame.grid[1:] - flame.grid[:-1]
+        t_res = np.sum(dx / flame.velocity[:-1])
+        qdot = flame.heat_release_rate
+        ix_max = np.argmax(qdot)
+        ydot = flame.net_production_rates
+        ppv = self.ComputeProgressVariable_Source(variables=None,flamelet_data=None,net_production_rate_flamelet=ydot)
+        ppv_spark = ppv[ix_max]
+        control_vars = self._control_vars[iGroup]
+        species_spark = []
+        for sp in self.__passive_species:
+            ix_sp = self.gas.species_index(sp)
+            pp_sp = ydot[ix_sp]*self.gas.molecular_weights[ix_sp]
+            species_spark.append(pp_sp[ix_max])
+        sources_spark = np.zeros(len(control_vars) + len(self.__passive_species))
+        sources_spark[control_vars.index("ProgressVariable")] = ppv_spark
+        for i_sp in range(len(self.__passive_species)):
+            sources_spark[len(control_vars) + i_sp] = species_spark[i_sp]
+        return sources_spark
+    
     def EnablePreferentialDiffusion(self, use_PD:bool=DefaultSettings_FGM.preferential_diffusion):
         """Include preferential diffusion scalars in flamelet data manifold.
 
@@ -1585,28 +1553,34 @@ class Config_FGM(Config):
                 raise Exception("Reactant temperature should be positive.")
         
         self.__Le_avg_method = avg_Le_const
-        if reactant_temperature == None:
-            T_reactants = 0.5*(self.__T_unb_lower + self.__T_unb_upper)
+        if (reactant_temperature == None):
+            if (self.__Le_avg_T_unb == None):
+                T_reactants = 0.5*(self.__T_unb_lower + self.__T_unb_upper)
+            else:
+                T_reactants = self.__Le_avg_T_unb
         else:
             T_reactants = reactant_temperature 
-        
-        if mixture_status == None:
-            mixture_status_gas = 0.5*(self.__mix_status_lower + self.__mix_status_upper)
+        self.__Le_avg_T_unb = T_reactants 
+
+        if (mixture_status == None):
+            if (self.__Le_avg_eq_ratio == None):
+                mixture_status_gas = 0.5*(self.__mix_status_lower + self.__mix_status_upper)
+            else:
+                mixture_status_gas = self.__Le_avg_eq_ratio
         else:
             mixture_status_gas = mixture_status
-
+        self.__Le_avg_eq_ratio = mixture_status_gas
         self.gas.TP =T_reactants, DefaultSettings_FGM.pressure 
         if self.__run_mixture_fraction:
-            self.gas.set_mixture_fraction(mixture_status_gas, self.__fuel_string, self.__oxidizer_string)
+            self.gas.set_mixture_fraction(self.__Le_avg_eq_ratio, self.__fuel_string, self.__oxidizer_string)
         else:
-            self.gas.set_equivalence_ratio(mixture_status_gas, self.__fuel_string, self.__oxidizer_string)
+            self.gas.set_equivalence_ratio(self.__Le_avg_eq_ratio, self.__fuel_string, self.__oxidizer_string)
         
         Le_reactants = ComputeLewisNumber(self.gas)
         self.gas.equilibrate("HP")
         Le_products = ComputeLewisNumber(self.gas)
 
-        self.__Le_const_sp = 0.5*(Le_reactants + Le_products)
-        self.__custom_Le_av_set = True 
+        self.__Le_const_sp = 0.5*(Le_reactants + Le_products) 
 
         return 
     
@@ -1974,6 +1948,18 @@ class Config_FGM(Config):
     
     def GetWeightsBiases(self, i_group:int=0):
         return self._MLP_weights[i_group], self._MLP_biases[i_group]
+    
+    def SetWeights(self, weights: list[np.ndarray[float]], i_group:int=0):
+        self._MLP_weights[i_group] = []
+        for w in weights:
+            self._MLP_weights[i_group].append(w)
+        return 
+    
+    def SetBiases(self, biases:list[np.ndarray[float]], i_group:int=0):
+        self._MLP_biases[i_group] = []
+        for w in biases:
+            self._MLP_biases[i_group].append(w)
+        return 
     
     def UpdateMLPHyperParams(self, trainer):
         group_idx = trainer.GetOutputGroup()

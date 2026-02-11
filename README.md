@@ -13,21 +13,15 @@ This repository describes the workflow for manifold generation for data-driven f
 The SU2 DataMiner workflow allows the user to generate fluid data and convert these into look-up tables (LUT) or multi-layer perceptrons (MLP) for usage in SU2 simulations. The types of simulations for which this workflow is suitable are flamelet-generated manifold (FGM) and non-ideal computational fluid dynamics (NICFD) simulations. This tool allows the user to start from scratch and end up with a table input file or a set of MLP input files which can immediately be used within SU2. 
 
 ## Requirements and Set-Up
-The SU2 DataMiner tool is python-based and was generated with python 3.11. Currently only Linux distributions are supported.
-You require the following modules for this workflow to run:
-- numpy
-- pickle
-- os
-- CoolProp
-- cantera
-- tqdm
-- csv
-- matplotlib
-- random 
-- tensorflow
-- time 
-- sklearn
-- pyfiglet
+The SU2 DataMiner tool is python-based and was generated with python 3.13. Currently only Linux distributions are supported.
+To install the required python modules, navigate to the SU2 DataMiner source code directory and run the following command:
+```
+python -m pip install -r required_packages.txt
+```
+Alternatively, a suitable conda environment can be created using the [environment recipe](environment.yml) through the following command:
+```
+conda env create -f environment.yml
+```
 
 After cloning this repository, add the following lines to your ```~/.bashrc``` in order to update your pythonpath accordingly:
 

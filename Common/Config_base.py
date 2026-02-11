@@ -19,7 +19,7 @@
 # Description:                                                                                |
 #  Base class for DataMiner configuration                                                     |
 #                                                                                             |
-# Version: 2.0.0                                                                              |
+# Version: 3.0.0                                                                              |
 #                                                                                             |
 #=============================================================================================#
 
@@ -291,6 +291,29 @@ class Config:
         :rtype: list[str]
         """
         return self._hidden_layer_architecture
+    
+    def SetWeights(self, weights:list[np.ndarray[float]]):
+        """Store the weight values of the neural network.
+
+        :param weights: weight arrays for the network hidden layers.
+        :type weights: list[np.ndarray[float]]
+        """
+
+        self._MLP_weights = []
+        for w in weights:
+            self._MLP_weights.append(w)
+        return 
+    
+    def SetBiases(self, biases:list[np.ndarray[float]]):
+        """Store the bias values of the neural network.
+
+        :param weights: bias arrays for the network hidden layers.
+        :type weights: list[np.ndarray[float]]
+        """
+        self._MLP_biases = []
+        for w in biases:
+            self._MLP_biases.append(w)
+        return 
     
     def SetActivationFunction(self, activation_function_in:str=DefaultProperties.activation_function):
         """Define the hidden layer activation function for the MLP-based manifold.

@@ -1,25 +1,25 @@
-FROM ubuntu:20.04
-ENV LANG C.UTF-8
+
+
+
+FROM ubuntu:latest
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
+    python3-tk \
     git \
     build-essential \
+    swig \
     ccache \ 
-    && python3 -m pip install tensorflow \
-    pickledb \
-    CoolProp \
-    cantera \
-    tqdm \
-    python-csv \
-    matplotlib \
-    scikit-learn \
     && rm -rf /var/lib/apt/lists/* \
     && update-alternatives --install /usr/bin/python python /usr/bin/python3 10 \
     && /usr/sbin/update-ccache-symlinks \
-    && echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc 
+    && echo 'export PATH="/usr/lib/ccache:$PATH"' | tee -a ~/.bashrc \
+    && apt-get update \
+    && apt-get install -y python3-virtualenv \
+    && apt-get install -y python3-venv 
+
 
 # Copies your code file from your action repository to the filesystem path `/` of the container
-COPY ./getPINNTraining.sh /getPINNTraining.sh
+COPY runTests.sh /runTests.sh
 
-ENTRYPOINT ["/getPINNTraining.sh"]
+ENTRYPOINT ["/runTests.sh"]
