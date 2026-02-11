@@ -29,6 +29,12 @@ using physics-informed machine learning methods.
    :caption: Tutorials: 
 
 
+.. toctree::
+   Config.rst 
+   :maxdepth: 2 
+   :caption: Documentation 
+
+
 Indices and tables
 ==================
 

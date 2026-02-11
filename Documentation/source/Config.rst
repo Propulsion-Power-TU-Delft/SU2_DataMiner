@@ -90,10 +90,6 @@ The networks are trained using batches of training data. The size of the trainin
 
 .. autofunction:: Common.Config_base.Config.GetBatchExpo 
 
-.. autofunction:: Common.Config_base.Config.SetNEpochs
-
-.. autofunction:: Common.Config_base.Config.GetNEpochs
-
 Additionally, the number of nodes in the hidden layers of the networks and activation function can be accessed. *SU2 DataMiner* currently supports the use of a single activation function to all hidden layers which can be selected from a list of options and the input and output layers use a linear function.
 
 .. autofunction:: Common.Config_base.Config.SetHiddenLayerArchitecture
