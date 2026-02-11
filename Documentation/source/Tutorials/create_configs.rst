@@ -3,7 +3,7 @@ Creating SU2 DataMiner Configurations
 
 *SU2 DataMiner* uses a configuration class in order to store important information regarding the data generation, data mining, and 
 manifold generation processes. This set of tutorials demonstrates some methods for creating *SU2 DataMiner* configurations 
-for FGM and NICFD applications. *SU2 DataMiner* configurations can be generated using an interactive menu and using the python interface.
+for FGM and NICFD applications. *SU2 DataMiner* configurations can be generated using an interactive menu and using the python API.
 The interactive method is recommended for instances where only a single configuration is required or when writing a configuration for 
 the first time, while through the python interface, it is possible to create multiple configurations at the same time.  
 
@@ -54,24 +54,34 @@ The first step is to select the type of configuration to generate. In this tutor
 
 2. Select reaction mechanism 
 
-*SU2 DataMiner* uses Cantera to generate one-dimensional, detailed chemistry flamelet data.
-Write the name of the chemistry 
+Currently, *SU2 DataMiner* only supports flamelet generation with `Cantera <https://cantera.org/index.html>`_. Cantera is an open-source software suite for chemical kinetics and thermodynamics which 
+supports the calculation of one-dimensional detailed chemistry solutions for FGM applications. The chemical kinetics solver in Cantera obtains its information about 
+the species composition, transport properties, and chemical reactions from a kinetics file. Within the interactive menu, you can specify the kinetics file used for flamelet calculations.
+SU2 DataMiner can use the kinetics files included in the Cantera Python module, or any other kinetics file as long as it is accessible from the terminal.
+
+By default, SU2 DataMiner will select the `gri30 <http://combustion.berkeley.edu/gri-mech/version30/text30.html>`_ mechanism, which is commonly used for modeling carbohydrate thermochemistry.
+
 
 .. code-block::
 
-    #====================================================================================================================================================================#
+    #===================================================================================================#
     Insert reaction mechanism file to use for flamelet computations (gri30.yaml by default): gri30.yaml
     Reaction mechanism: gri30.yaml
-    #====================================================================================================================================================================#
+    #===================================================================================================#
+
+
+SU2 DataMiner will give a warning if the chemical kinetics file cannot be found or if improperly formatted. 
+
 
 3. Define fuel composition 
 
+In the next steps, the user specifies the fuel and oxidizer composition by naming the species and molar weights. By default, the fuel is defined as pure methane 
 .. code-block:: 
 
-    #====================================================================================================================================================================#
+    #===================================================================#
     Insert comma-separated list of fuel species (CH4 by default): CH4
     Fuel definition: CH4:1.0
-    #====================================================================================================================================================================#
+    #===================================================================#
 
 4. Define oxidizer composition 
 
@@ -99,7 +109,7 @@ Write the name of the chemistry
 
     #====================================================================================================================================================================#
     Insert comma-separated list of progress variable species (CH4,O2,CO2 by default):
-    Insert comma-separated list of progress variable weights (-0.5359303352635182,-0.2687021179021383,0.1953675468343435 by default):
+    Insert comma-separated list of progress variable weights (-0.5359,-0.2687,0.1953 by default):
     Progress variable definition: (-5.359e-01)*CH4+(-2.687e-01)*O2+(+1.954e-01)*CO2
     #====================================================================================================================================================================#
 
@@ -220,3 +230,5 @@ Write the name of the chemistry
 
 2. Interactive method: NICFD
 ----------------------------
+
+

@@ -16,6 +16,7 @@ using physics-informed machine learning methods.
 
 .. toctree::
    Setup
+   Tutorials/create_configs
    Config
    DataGeneration
    flameletprocessing 
