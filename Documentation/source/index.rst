@@ -31,7 +31,7 @@ using physics-informed machine learning methods.
 
 .. toctree::
    Config.rst 
-   :maxdepth: 2 
+   :maxdepth: 3
    :caption: Documentation 
 
 
