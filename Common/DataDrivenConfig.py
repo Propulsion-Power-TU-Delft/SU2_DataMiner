@@ -1054,11 +1054,10 @@ class Config_FGM(Config):
         return 
     
     def GetMixtureBounds(self):
-        """
-        Get the mixture status bounds.
+        """Get the mixture status bounds.
+
         :return: List containing lower and upper mixture status values.
         :rtype: list[float]
-
         """
         return [self.__mix_status_lower, self.__mix_status_upper]
     
@@ -1078,8 +1077,7 @@ class Config_FGM(Config):
         return 
     
     def GetNpMix(self):
-        """
-        Get the number of divisions between the lean and rich mixture status for flamelet generation.
+        """Get the number of divisions between the lean and rich mixture status for flamelet generation.
 
         :return: number of divisions between rich and lean.
         :rtype: int
