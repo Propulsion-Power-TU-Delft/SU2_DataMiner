@@ -1,22 +1,12 @@
-.. _configurations:
+.. _base:
 
-***************************
-SU2 DataMiner Configuration
-***************************
+SU2 DataMiner Configuration Base Class
+======================================
 *SU2 DataMiner* uses a configuration class in order to store important information regarding the data generation, data mining, and 
 manifold generation processes. This page lists some of the important functions of the *Config* class which acts as the :ref:`base<base>` 
 class for configurations specific to the application such as :ref:`NICFD<NICFD>` and FGM :ref:`FGM<FGM>`, for which additional settings can be specified.
 
 .. contents:: :depth: 2
-
-.. _base:
-
-Base Config Class 
-=================
-
-*SU2 DataMiner* uses a configuration class in order to store important information regarding the data generation, data mining, and 
-manifold generation processes. This page lists some of the important functions of the *Config* class which acts as the base 
-class for configurations specific to the application such as :ref:`NICFD<NICFD>` and FGM :ref:`FGM<FGM>`, for which additional settings can be specified.
 
 
 Storage Location and Configuration Information
@@ -227,55 +217,5 @@ All relevant information about the network is automatically written to a properl
 .. autofunction:: Common.Config_base.Config.WriteSU2MLP
 
 
-.. _NICFD:
-
-Configuration for real-gas applications 
-=======================================
-
-The following section describes the most important functions of the Config_NICFD class.
-
-.. autofunction:: Common.DataDrivenConfig.Config_NICFD.__init__
-
-.. autofunction:: Common.DataDrivenConfig.Config_NICFD.SetFluid
-
-.. autofunction:: Common.DataDrivenConfig.Config_NICFD.SetEquationOfState 
-
-Example
--------
-The code snippet below demonstrates the 
-:: 
-
-    from su2dataminer.config import Config_NICFD 
-
-    config = Config_NICFD()
-    config.SetFluid("MM")
-    config.SetEquationOfState("HEOS")
-    config.SetName("siloxane_MM_heos")
-    config.UseAutoRange(True)
-    config.PrintBanner()
-
-
-.. _FGM:
-
-Configuration for combustion applications 
-=========================================
-
 
 .. _MLPCpp : https://github.com/EvertBunschoten/MLPCpp.git 
-
-
-References
-==========
-
-.. _reluarticle:
-
-Richard H.R Hahnloser et al. “Digital selection and analogue amplification coexist in a cortex-inspired silicon circuit”. In: Nature 405 (June 2000), pp. 947-951.
-
-.. _eluarticle:
-
-Djork-Arné Clevert, Thomas Unterthiner, and Sepp Hochreiter. “Fast and Accurate Deep Network Learning by Exponential Linear Units (ELUs)”. In: (Feb. 2016). URL:http://arxiv.org/abs/1511.07289
-
-.. _geluarticle:
-
-Dan Hendrycks and Kevin Gimpel. “Gaussian Error Linear Units (GELUs)”. In:(June 2023). URL: http://arxiv.org/abs/1606.08415.
-

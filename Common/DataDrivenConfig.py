@@ -239,6 +239,11 @@ class Config_NICFD(Config):
         return 
     
     def GetAutoRange(self):
+        """Whether fluid data ranges are automatically determined by CoolProp
+
+        :return: boolean if range is automatically determined
+        :rtype: bool
+        """
         return self.__use_auto_range 
     
     def UsePTGrid(self, PT_grid:bool=DefaultSettings_NICFD.use_PT_grid):
@@ -328,9 +333,9 @@ class Config_NICFD(Config):
     def SetDensityBounds(self, Rho_lower:float=DefaultSettings_NICFD.Rho_min, Rho_upper:float=DefaultSettings_NICFD.Rho_max):
         """Define the density bounds of the density-energy based fluid data grid.
 
-        :param Rho_lower: lower limit density value, defaults to DefaultSettings_NICFD.Rho_min
+        :param Rho_lower: lower limit density value in kg/m3, defaults to DefaultSettings_NICFD.Rho_min
         :type Rho_lower: float, optional
-        :param Rho_upper: upper limit for density, defaults to DefaultSettings_NICFD.Rho_max
+        :param Rho_upper: upper limit for density in kg/m3, defaults to DefaultSettings_NICFD.Rho_max
         :type Rho_upper: float, optional
         :raises Exception: if lower value for density exceeds upper value.
         """
@@ -989,11 +994,10 @@ class Config_FGM(Config):
         return 
     
     def GetReactionMechanism(self):
-        """
-        Get the reaction mechanism used for flamelet generation.
+        """Get the reaction mechanism used for flamelet generation.
+
         :return: reaction mechanism name.
         :rtype: str
-
         """
         return self.__reaction_mechanism
     

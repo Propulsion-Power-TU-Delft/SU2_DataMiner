@@ -16,7 +16,6 @@ using physics-informed machine learning methods.
 
 .. toctree::
    Setup
-   Tutorials/create_configs
    :maxdepth: 1
    :caption: Contents:
 
@@ -30,9 +29,9 @@ using physics-informed machine learning methods.
 
 
 .. toctree::
-   Config.rst 
-   :maxdepth: 3
-   :caption: Documentation 
+   documentation/index.rst
+   :caption: Documentation
+   :maxdepth: 2
 
 
 Indices and tables
