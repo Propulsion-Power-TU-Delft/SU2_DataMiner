@@ -1356,8 +1356,8 @@ class Config_FGM(Config):
         """
         Set the passive transported species for which source terms should be saved in the manifold.
 
-        :param __passive_species: list of species names.
-        :type __passive_species: list[str]
+        :param passive_species: list of species names.
+        :type passive_species: list[str]
         """
         self.__passive_species = passive_species
         return 
