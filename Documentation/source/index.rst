@@ -16,6 +16,7 @@ using physics-informed machine learning methods.
 
 .. toctree::
    Setup
+   Development
    :maxdepth: 1
    :caption: Contents:
 
