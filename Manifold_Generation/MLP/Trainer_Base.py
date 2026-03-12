@@ -86,7 +86,7 @@ class MLPTrainer:
     # Hardware info:
     _kind_device:str = "CPU" # Device type used to train (CPU or GPU)
     _device_index:int = 0    # Device index (core index or GPU card index)
-    
+    _model_index:int = 0
     # MLP input (controlling) variables.
     _controlling_vars:list[str] = ["Density", 
                         "Energy"]
@@ -99,6 +99,7 @@ class MLPTrainer:
     _Np_train:int = None
     _Np_test:int = None
     _Np_val:int = None
+    _Np_batch:int = None
     _X_train_norm:np.ndarray = None 
     _Y_train_norm:np.ndarray = None
     _X_test_norm:np.ndarray = None 
@@ -337,6 +338,7 @@ class MLPTrainer:
         if batch_expo < 0:
             raise Exception("Mini-batch exponent should be higher than zero.")
         self._batch_expo = batch_expo
+        self._Np_batch = int(2**self._batch_expo)
         return 
     
     def SetHiddenLayers(self, layers_input:list[int]=DefaultProperties.hidden_layer_architecture):
@@ -379,7 +381,7 @@ class MLPTrainer:
         """Set the number of steps in the exponential decay algorithm. The number of steps scale are proportioned based on the number of epochs, 
         and training data size and mini batch size.
         """
-        self._decay_steps = int(1e-3 * self._n_epochs * self._Np_train / (2**self._batch_expo))
+        self._decay_steps = int(1e-3 * self._n_epochs * self._Np_train / self._Np_batch)
         return 
     
     def RestartTraining(self):
@@ -757,7 +759,7 @@ class TensorFlowFit(MLPTrainer):
                                                       verbose=self._verbose)
             self.history = self._model.fit(self._X_train_norm, self._Y_train_norm, \
                                           epochs=self._n_epochs, \
-                                          batch_size=2**self._batch_expo,\
+                                          batch_size=self._Np_batch,\
                                           verbose=self._verbose, \
                                           validation_data=(self._X_val_norm, self._Y_val_norm), \
                                           shuffle=True,\
@@ -1041,7 +1043,7 @@ class CustomTrainer(MLPTrainer):
         return 
     
     def SetTrainBatches(self):
-        train_batches = tf.data.Dataset.from_tensor_slices((self._X_train_norm, self._Y_train_norm)).batch(2**self._batch_expo)
+        train_batches = tf.data.Dataset.from_tensor_slices((self._X_train_norm, self._Y_train_norm)).batch(self._Np_batch)
         return train_batches
     
 
@@ -1055,7 +1057,6 @@ class CustomTrainer(MLPTrainer):
             self.LoopBatches(train_batches=train_batches)
 
             val_loss = self.ValidationLoss()
-            
             if (self._i_epoch + 1) % self.callback_every == 0:
                 self.TestLoss()
                 self.CustomCallback()
@@ -1288,7 +1289,6 @@ class PhysicsInformedTrainer(CustomTrainer):
         train_batches_domain = tf.data.Dataset.from_tensor_slices((self._X_train_norm, self._Y_state_train_norm)).batch(2**self._batch_expo)
         domain_batches_list = [b for b in train_batches_domain]
         
-        batch_size_train = 2**self._batch_expo
 
         if self._enable_boundary_loss:
             # Collect projection array data.
@@ -1301,7 +1301,7 @@ class PhysicsInformedTrainer(CustomTrainer):
             X_boundary_tf = tf.constant(self._X_boundary_norm, dtype=self._dt)
         
             # Forumulate batches.
-            batches_concat = tf.data.Dataset.from_tensor_slices((X_boundary_tf, p_concatenated, Y_target_concatenated)).batch(batch_size_train)
+            batches_concat = tf.data.Dataset.from_tensor_slices((X_boundary_tf, p_concatenated, Y_target_concatenated)).batch(self._Np_batch)
             batches_concat_list = [b for b in batches_concat]
 
             # Re-size boundary data batches to that of the domain batches such that both data can be evaluated simultaneously during training.
@@ -1652,7 +1652,7 @@ class TrainMLP:
         self._Config=Config_in
         self.alpha_expo = self._Config.GetAlphaExpo()
         self.lr_decay = self._Config.GetLRDecay()
-        self.batch_expo = self._Config.GetBatchExpo()
+        self.SetBatchExpo(self._Config.GetBatchExpo())
         self.activation_function = self._Config.GetActivationFunction()
         self.architecture = []
         for n in self._Config.GetHiddenLayerArchitecture():
